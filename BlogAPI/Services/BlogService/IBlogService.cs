@@ -1,10 +1,11 @@
-﻿using BlogAPI.Models;
+﻿using BlogAPI.Communication;
+using BlogAPI.Models;
 
 namespace BlogAPI.Services;
 
 public interface IBlogService
 {
-    public Task Create(Blog newBlog);
+    public Task<AddBlogResponse> Create(Blog newBlog);
     public Task Delete(Guid id);
     public Task<Blog> Get(Guid id);
     public Task<List<Blog>> GetAll();

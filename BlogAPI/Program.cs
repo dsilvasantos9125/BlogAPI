@@ -1,5 +1,7 @@
 using BlogAPI.Data;
 using BlogAPI.Mapping;
+using BlogAPI.Repositories;
+using BlogAPI.Repository;
 using BlogAPI.Services;
 using Microsoft.EntityFrameworkCore;
 
@@ -15,6 +17,8 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddDbContext<BlogContext>(options =>
 options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+builder.Services.AddScoped<IBlogRepository, BlogRepository>();
+builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IBlogService, BlogService>();
 builder.Services.AddScoped<IPostService, PostService>();
 

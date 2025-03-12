@@ -4,6 +4,7 @@ using BlogAPI.Services;
 using Microsoft.AspNetCore.Mvc;
 using AutoMapper;
 using BlogAPI.Extensions;
+using BlogAPI.Communication;
 
 namespace BlogAPI.Controllers;
 
@@ -27,9 +28,13 @@ public class BlogController : ControllerBase
 			return BadRequest(ModelState.GetErrorMessages());
 
 		Blog newBlog = _mapper.Map<BlogResource, Blog>(addBlogResource);
+		AddBlogResponse result = await _blogService.Create(newBlog);
 
-	    await _blogService.Create(newBlog);
-	    return Ok(addBlogResource);
+		if (!result.Success)
+			return BadRequest(result.Message);
+
+		BlogResource blogResource = _mapper.Map<Blog, BlogResource>(result.Blog);
+		return Ok(blogResource);
     }
 
 	[HttpDelete("{id}")]

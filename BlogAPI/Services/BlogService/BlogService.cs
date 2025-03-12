@@ -1,46 +1,45 @@
-﻿using BlogAPI.Data;
+﻿using BlogAPI.Communication;
 using BlogAPI.Models;
-using Microsoft.EntityFrameworkCore;
+using BlogAPI.Repositories;
+using BlogAPI.Repository;
 
 namespace BlogAPI.Services;
 
 public class BlogService : IBlogService
 {
-    private readonly BlogContext _blogContext;
+    private readonly IBlogRepository _blogRepository;
+	private readonly IUnitOfWork _unitOfWork;
 
-    public BlogService(BlogContext blogContext)
-    {
-        _blogContext = blogContext;
-    }
-
-    public async Task Create(Blog newBlog)
-    {
-        await _blogContext.Blogs.AddAsync(newBlog);
-        await _blogContext.SaveChangesAsync();
-    }
-
-	public async Task Delete(Guid id)
+	public BlogService(IBlogRepository blogRepository, IUnitOfWork unitOfWork)
 	{
-		Blog? currentBlog = await Get(id);
-
-		_blogContext.Blogs.Remove(currentBlog);
-		await _blogContext.SaveChangesAsync();
+		_blogRepository = blogRepository;
+		_unitOfWork = unitOfWork;
 	}
 
+	public async Task<AddBlogResponse> Create(Blog newBlog) 
+	{
+		try
+		{
+			await _blogRepository.Create(newBlog);
+			await _unitOfWork.CompleteAsync();
+
+			return new AddBlogResponse(newBlog);
+		}
+		catch (Exception ex)
+		{
+			return new AddBlogResponse($"Um erro ocorreu ao salvar a categoria: {ex.Message}");
+		}
+	}
+
+	public async Task Delete(Guid id) =>
+		await _blogRepository.Delete(id);
+
 	public async Task<Blog> Get(Guid id) => 
-		await _blogContext.Blogs.FirstOrDefaultAsync(x => x.BlogId == id);
+		await _blogRepository.Get(id);
 		
 	public async Task<List<Blog>> GetAll() => 
-		await _blogContext.Blogs.ToListAsync();
+		await _blogRepository.GetAll();
 
-    public async Task Update(Guid id, Blog updatedBlog)
-    {
-        Blog? selectedBlog = await Get(id);
-
-		selectedBlog.BlogAuthor = updatedBlog.BlogAuthor;
-		selectedBlog.BlogDescription = updatedBlog.BlogDescription;
-		selectedBlog.BlogName = updatedBlog.BlogName;
-
-		await _blogContext.SaveChangesAsync();
-    }
+    public async Task Update(Guid id, Blog updatedBlog) =>
+		await _blogRepository.Update(id, updatedBlog);
 }
