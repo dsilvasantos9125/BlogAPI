@@ -16,23 +16,40 @@ public class BlogService : IBlogService
 		_unitOfWork = unitOfWork;
 	}
 
-	public async Task<AddBlogResponse> Create(Blog newBlog) 
+	public async Task<BlogResponse> Create(Blog newBlog) 
 	{
 		try
 		{
 			await _blogRepository.Create(newBlog);
 			await _unitOfWork.CompleteAsync();
 
-			return new AddBlogResponse(newBlog);
+			return new BlogResponse(newBlog);
 		}
 		catch (Exception ex)
 		{
-			return new AddBlogResponse($"Um erro ocorreu ao salvar a categoria: {ex.Message}");
+			return new BlogResponse($"Um erro ocorreu ao salvar o blog: {ex.Message}");
 		}
 	}
 
-	public async Task Delete(Guid id) =>
-		await _blogRepository.Delete(id);
+	public async Task<BlogResponse> Delete(Guid id)
+	{
+		Blog existingBlog = await _blogRepository.Get(id);
+
+		if (existingBlog == null)
+			return new BlogResponse("Blog não encontrado.");
+
+		try
+		{
+			_blogRepository.Delete(existingBlog);
+			await _unitOfWork.CompleteAsync();
+
+			return new BlogResponse(existingBlog);
+		}
+		catch (Exception ex)
+		{
+			return new BlogResponse($"Um erro ocorreu ao salvar o blog: {ex.Message}");
+		}
+	}
 
 	public async Task<Blog> Get(Guid id) => 
 		await _blogRepository.Get(id);
@@ -40,6 +57,27 @@ public class BlogService : IBlogService
 	public async Task<List<Blog>> GetAll() => 
 		await _blogRepository.GetAll();
 
-    public async Task Update(Guid id, Blog updatedBlog) =>
-		await _blogRepository.Update(id, updatedBlog);
+    public async Task<BlogResponse> Update(Guid id, Blog updatedBlog)
+	{
+		Blog existingBlog = await _blogRepository.Get(id);
+
+		if (existingBlog == null)
+			return new BlogResponse("Blog não encontrado.");
+
+		existingBlog.BlogAuthor = updatedBlog.BlogAuthor;
+		existingBlog.BlogName = updatedBlog.BlogName;
+		existingBlog.BlogDescription = updatedBlog.BlogDescription;
+
+		try
+		{
+			_blogRepository.Update(existingBlog);
+			await _unitOfWork.CompleteAsync();
+
+			return new BlogResponse(existingBlog);
+		}
+		catch (Exception ex)
+		{
+			return new BlogResponse($"Um erro ocorreu ao salvar o blog: {ex.Message}");
+		}
+	}
 }

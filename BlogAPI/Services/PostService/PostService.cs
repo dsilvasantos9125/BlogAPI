@@ -1,56 +1,82 @@
-﻿using BlogAPI.Data;
+﻿using BlogAPI.Communication;
+using BlogAPI.Data;
 using BlogAPI.Models;
+using BlogAPI.Repositories;
 using Microsoft.EntityFrameworkCore;
 
 namespace BlogAPI.Services;
 
 public class PostService : IPostService
 {
-    private readonly BlogContext _blogContext;
+    private readonly IPostRepository _postRepository;
+	private readonly IUnitOfWork _unitOfWork;
 
-    public PostService(BlogContext blogContext)
-    {
-        _blogContext = blogContext;
-    }
-
-	public async Task Create(Post newPost)
+	public PostService(IPostRepository postRepository, IUnitOfWork unitOfWork)
 	{
-		newPost.PostDate = DateTime.Now.ToString("f");
-
-		await _blogContext.Posts.AddAsync(newPost);
-		await _blogContext.SaveChangesAsync();
+		_postRepository = postRepository;
+		_unitOfWork = unitOfWork;
 	}
 
-	public async Task Delete(Guid id)
+	public async Task<PostResponse> Create(Post newPost)
 	{
-		Post? currentPost = await Get(id);
+		try
+		{
+			await _postRepository.Create(newPost);
+			await _unitOfWork.CompleteAsync();
 
-		_blogContext.Remove(currentPost);
-		await _blogContext.SaveChangesAsync();
+			return new PostResponse(newPost);
+		}
+		catch (Exception ex)
+		{
+			return new PostResponse($"$\"Um erro ocorreu ao salvar o post: {ex.Message}");
+		}
 	}
 
-	public async Task<Post> Get(Guid id) => 
-		await _blogContext.Posts.FirstOrDefaultAsync(x => x.PostId == id);
-
-	public async Task<List<Post>> GetByBlogId(Guid blogId)
+	public async Task<PostResponse> Delete(Guid id)
 	{
-		List<Post> posts = await _blogContext.Posts
-			.Include(x => x.Blog)
-			.Where(x => x.BlogId == blogId)
-			.ToListAsync();
+		Post existingPost = await _postRepository.Get(id);
 
-		return posts;
+		if (existingPost == null)
+			return new PostResponse("Post não encontrado.");
+
+		try
+		{
+			_postRepository.Delete(existingPost);
+			await _unitOfWork.CompleteAsync();
+
+			return new PostResponse(existingPost);
+		}
+		catch (Exception ex)
+		{
+			return new PostResponse($"Um erro ocorreu ao salvar o post: {ex.Message}");
+		}
 	}
 
-	public async Task Update(Guid id, Post updatedPost)
+	public async Task<Post> Get(Guid id) =>
+		await _postRepository.Get(id);
+
+	public async Task<List<Post>> GetByBlogId(Guid blogId) =>
+		await _postRepository.GetByBlogId(blogId);
+
+	public async Task<PostResponse> Update(Guid id, Post updatedPost)
 	{
-		Post? selectedPost = await Get(id);
+		Post existingPost = await _postRepository.Get(id);
 
-		selectedPost.PostContent = updatedPost.PostContent;
-		selectedPost.PostDate = "Editado em: " + DateTime.Now.ToString("f");
-		selectedPost.PostName = updatedPost.PostName;
+		if (existingPost == null) 
+			return new PostResponse("Post não encontrado.");
 
-		await _blogContext.SaveChangesAsync();
+		updatedPost.PostName = existingPost.PostName;
+		updatedPost.PostContent = existingPost.PostContent;
+		updatedPost.PostDate = DateTime.Now.ToString("Editado em: f");
+
+		try
+		{
+			_postRepository.Update(existingPost);
+		}
+		catch (Exception ex)
+		{
+			throw;
+		}
 	}
 }
 

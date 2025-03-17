@@ -10,5 +10,6 @@ public class BlogMappingProfile : Profile
 	{
 		CreateMap<Blog, BlogResource>();
 		CreateMap<BlogResource, Blog>();
+		CreateMap<Blog, BlogGetResource>();
 	}
 }

@@ -55,9 +55,9 @@ public class PostController : ControllerBase
 	}
 
 	[HttpPut("{id}")]
-	public async Task<IActionResult> Update(Guid id, PostUpdateResource updatePostResource)
+	public async Task<IActionResult> Update(Guid id, PostGetResource updatePostResource)
 	{
-		Post updatedPost = _mapper.Map<PostUpdateResource, Post>(updatePostResource);
+		Post updatedPost = _mapper.Map<PostGetResource, Post>(updatePostResource);
 
 		await _postService.Update(id, updatedPost);
 		return Ok(updatePostResource);

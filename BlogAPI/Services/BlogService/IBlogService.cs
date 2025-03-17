@@ -5,9 +5,9 @@ namespace BlogAPI.Services;
 
 public interface IBlogService
 {
-    public Task<AddBlogResponse> Create(Blog newBlog);
-    public Task Delete(Guid id);
+    public Task<BlogResponse> Create(Blog newBlog);
+    public Task<BlogResponse> Delete(Guid id);
     public Task<Blog> Get(Guid id);
     public Task<List<Blog>> GetAll();
-    public Task Update(Guid id, Blog updatedBlog);
+    public Task<BlogResponse> Update(Guid id, Blog updatedBlog);
 }

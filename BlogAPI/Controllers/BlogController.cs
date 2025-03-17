@@ -28,7 +28,7 @@ public class BlogController : ControllerBase
 			return BadRequest(ModelState.GetErrorMessages());
 
 		Blog newBlog = _mapper.Map<BlogResource, Blog>(addBlogResource);
-		AddBlogResponse result = await _blogService.Create(newBlog);
+		BlogResponse result = await _blogService.Create(newBlog);
 
 		if (!result.Success)
 			return BadRequest(result.Message);
@@ -40,8 +40,13 @@ public class BlogController : ControllerBase
 	[HttpDelete("{id}")]
 	public async Task<IActionResult> Delete(Guid id)
 	{
-		await _blogService.Delete(id);
-		return Ok();
+		BlogResponse result = await _blogService.Delete(id);
+
+		if (!result.Success)
+			return BadRequest(result.Message);
+
+		BlogResource blogResource = _mapper.Map<Blog, BlogResource>(result.Blog);
+		return Ok(blogResource);
 	}
 
 	[HttpGet]
@@ -49,7 +54,7 @@ public class BlogController : ControllerBase
 	{
 		List<Blog> blogsList = await _blogService.GetAll();
 
-		List<BlogResource> resultBlogs = _mapper.Map<List<Blog>, List<BlogResource>>(blogsList);
+		List<BlogGetResource> resultBlogs = _mapper.Map<List<Blog>, List<BlogGetResource>>(blogsList);
 		return Ok(resultBlogs);
 	}
 
@@ -63,17 +68,24 @@ public class BlogController : ControllerBase
 			return NotFound();
 		}
 
-		BlogResource resultBlog = _mapper.Map<Blog, BlogResource>(currentBlog);
+		BlogGetResource resultBlog = _mapper.Map<Blog, BlogGetResource>(currentBlog);
 
 		return Ok(resultBlog);
 	}
 
 	[HttpPut("{id}")]
-	public async Task<IActionResult> Update(Guid id, BlogResource updateBlogResource)
+	public async Task<IActionResult> Update(Guid id, [FromBody] BlogResource updateBlogResource)
 	{
-		Blog updateBlog = _mapper.Map<BlogResource, Blog>(updateBlogResource);
+		if (!ModelState.IsValid)
+			return BadRequest(ModelState.GetErrorMessages());	
 
-		await _blogService.Update(id, updateBlog);
-		return Ok(updateBlogResource);
+		Blog updateBlog = _mapper.Map<BlogResource, Blog>(updateBlogResource);
+		BlogResponse result = await _blogService.Update(id, updateBlog);
+
+		if (!result.Success)
+			BadRequest(result.Message);
+
+		BlogResource blogResource = _mapper.Map<Blog, BlogResource>(result.Blog);
+		return Ok(blogResource);
 	}
 }
