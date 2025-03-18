@@ -26,8 +26,8 @@ public class PostRepository : IPostRepository
 	public async Task<Post> Get(Guid id)
 	{
 		Post post = await _blogContext.Posts
-		.Include(post => post.Blog)
-		.FirstOrDefaultAsync(post => post.PostId == id);
+			.Include(p => p.Blog)
+			.FirstOrDefaultAsync(post => post.PostId == id);
 
 		return post;
 	}
@@ -35,8 +35,8 @@ public class PostRepository : IPostRepository
 	public async Task<List<Post>> GetByBlogId(Guid blogId)
 	{
 		List<Post> posts = await _blogContext.Posts
-		.Include(x => x.Blog)
-		.Where(x => x.BlogId == blogId)
+		.Include(post => post.Blog)
+		.Where(post => post.BlogId == blogId)
 		.ToListAsync();
 
 		return posts;

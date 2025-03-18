@@ -28,16 +28,8 @@ public class BlogRepository : IBlogRepository
 		return blog;
 	}
 
-	public async Task<List<Blog>> GetAll()
-	{
-		List<Blog> blogs = await _blogContext.Blogs
-			.Include(
-			blog => blog.Posts
-			.OrderBy(post => post.PostName))
-			.ToListAsync();
-
-		return blogs;
-	}
+	public async Task<List<Blog>> GetAll() =>
+		await _blogContext.Blogs.ToListAsync();
 
 	public void Update(Blog updatedBlog) =>
 		_blogContext.Update(updatedBlog);

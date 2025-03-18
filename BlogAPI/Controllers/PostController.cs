@@ -1,4 +1,6 @@
 ﻿using AutoMapper;
+using BlogAPI.Communication;
+using BlogAPI.Extensions;
 using BlogAPI.Models;
 using BlogAPI.Resources;
 using BlogAPI.Services;
@@ -20,12 +22,31 @@ public class PostController : ControllerBase
 	}
 
 	[HttpPost]
-	public async Task<IActionResult> Add(PostResource addPostResource)
+	public async Task<IActionResult> Add([FromBody] PostResource addPostResource)
 	{
-		Post newPost = _mapper.Map<PostResource, Post>(addPostResource);
+		if (!ModelState.IsValid)
+			return BadRequest(ModelState.GetErrorMessages());
 
-		await _postService.Create(newPost);
-		return Ok(addPostResource);
+		Post newPost = _mapper.Map<PostResource, Post>(addPostResource);
+		PostResponse result = await _postService.Create(newPost);
+
+		if (!result.Success)
+			return BadRequest(result.Message);
+
+		PostResource postResource = _mapper.Map<Post, PostResource>(result.Post);
+		return Ok(postResource);
+	}
+
+	[HttpDelete("{id}")]
+	public async Task<IActionResult> Delete(Guid id)
+	{
+		PostResponse result = await _postService.Delete(id);
+
+		if (!result.Success)
+			return BadRequest(result.Message);
+		
+		PostResource postResource = _mapper.Map<Post, PostResource>(result.Post);
+		return Ok(postResource);
 	}
 
 	[Route("Get/{id}")]
@@ -37,8 +58,8 @@ public class PostController : ControllerBase
 		if (selectedPost == null)
 			return NotFound();
 
-		PostResource resultPost = _mapper.Map<Post, PostResource>(selectedPost);
-		return Ok(resultPost);
+		PostGetResource postResource = _mapper.Map<Post, PostGetResource>(selectedPost);
+		return Ok(postResource);
 	}
 
 	[Route("GetByBlogId/{blogId}")]
@@ -47,26 +68,26 @@ public class PostController : ControllerBase
 	{
 		List<Post> posts = await _postService.GetByBlogId(blogId);
 
-		List<PostResource> postsResources = _mapper.Map<
+		List<PostGetResource> postsResources = _mapper.Map<
 			List<Post>,
-			List<PostResource>>(posts);
+			List<PostGetResource>>(posts);
 
 		return Ok(postsResources);
 	}
 
 	[HttpPut("{id}")]
-	public async Task<IActionResult> Update(Guid id, PostGetResource updatePostResource)
+	public async Task<IActionResult> Update(Guid id, [FromBody] PostGetResource updatePostResource)
 	{
+		if (!ModelState.IsValid)
+			return BadRequest(ModelState.GetErrorMessages());
+
 		Post updatedPost = _mapper.Map<PostGetResource, Post>(updatePostResource);
+		PostResponse result = await _postService.Update(id, updatedPost);
 
-		await _postService.Update(id, updatedPost);
-		return Ok(updatePostResource);
-	}
+		if (!result.Success)
+			return BadRequest(result.Message);
 
-	[HttpDelete("{id}")]
-	public async Task<IActionResult> Delete(Guid id)
-	{
-		await _postService.Delete(id);
-		return Ok();
+		PostGetResource postResource = _mapper.Map<Post, PostGetResource>(result.Post);
+		return Ok(postResource);
 	}
 }

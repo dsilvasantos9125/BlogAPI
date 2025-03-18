@@ -11,6 +11,7 @@ namespace BlogAPI.Mapping
 			CreateMap<Post, PostResource>();
 			CreateMap<PostResource, Post>();
 			CreateMap<Post, PostGetResource>();
+			CreateMap<PostGetResource, Post>();
 		}
 	}
 }

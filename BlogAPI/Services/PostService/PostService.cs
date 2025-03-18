@@ -1,8 +1,6 @@
 ﻿using BlogAPI.Communication;
-using BlogAPI.Data;
 using BlogAPI.Models;
 using BlogAPI.Repositories;
-using Microsoft.EntityFrameworkCore;
 
 namespace BlogAPI.Services;
 
@@ -28,7 +26,7 @@ public class PostService : IPostService
 		}
 		catch (Exception ex)
 		{
-			return new PostResponse($"$\"Um erro ocorreu ao salvar o post: {ex.Message}");
+			return new PostResponse($"Um erro ocorreu ao salvar o post: {ex.Message}");
 		}
 	}
 
@@ -65,17 +63,20 @@ public class PostService : IPostService
 		if (existingPost == null) 
 			return new PostResponse("Post não encontrado.");
 
-		updatedPost.PostName = existingPost.PostName;
-		updatedPost.PostContent = existingPost.PostContent;
-		updatedPost.PostDate = DateTime.Now.ToString("Editado em: f");
+		existingPost.PostName = updatedPost.PostName;
+		existingPost.PostContent = updatedPost.PostContent;
+		existingPost.PostDate = "Editado em: " + DateTime.Now.ToString("f");
 
 		try
 		{
 			_postRepository.Update(existingPost);
+			await _unitOfWork.CompleteAsync();
+
+			return new PostResponse(existingPost);
 		}
 		catch (Exception ex)
 		{
-			throw;
+			return new PostResponse($"Um erro ocorreu ao salvar o post: {ex.Message}");
 		}
 	}
 }

@@ -54,7 +54,10 @@ public class BlogController : ControllerBase
 	{
 		List<Blog> blogsList = await _blogService.GetAll();
 
-		List<BlogGetResource> resultBlogs = _mapper.Map<List<Blog>, List<BlogGetResource>>(blogsList);
+		List<BlogGetResource> resultBlogs = _mapper.Map<
+			List<Blog>, 
+			List<BlogGetResource>>(blogsList);
+
 		return Ok(resultBlogs);
 	}
 
@@ -69,7 +72,6 @@ public class BlogController : ControllerBase
 		}
 
 		BlogGetResource resultBlog = _mapper.Map<Blog, BlogGetResource>(currentBlog);
-
 		return Ok(resultBlog);
 	}
 
